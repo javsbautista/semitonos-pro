@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Semitonos DTF Pro · Estudio Web</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --accent-shadow: #1e40af;
+      --black: #181818;
+      --white: #ffffff;
+      --gray-bg: #f0f0f0;
+      --gray-panel: #f9f9f9;
+      --gray-border: #dcdcdc;
+      --font-title: 'Bebas Neue', sans-serif;
+      --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: var(--font-body);
+      background: #1a1a1a;
+      color: var(--black);
+      overscroll-behavior-y: none;
+    }
+
+    .app-interface {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+      align-items: stretch;
+    }
+
+    /* ==================== Sidebar ==================== */
+    .sidebar {
+      width: 375px;
+      min-width: 375px;
+      background: var(--white);
+      border-right: 1px solid var(--gray-border);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 18px 22px 8px 22px;
+      flex-shrink: 0;
+      background: var(--white);
+    }
+
+    .brand-title {
+      font-family: var(--font-title);
+      font-size: 2.7rem;
+      line-height: 0.95;
+      color: var(--black);
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-subtitle {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e5e5e5;
+      width: 100%;
+      margin: 12px 0;
+    }
+
+    .sidebar-scroll {
+      flex: 1 1 auto;
+      padding: 0 22px 90px 22px;
+      overflow-y: auto;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar { width: 6px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    /* Acordeones */
+    .accordion-item { border-bottom: 1px solid #eee; }
+    .accordion-header {
+      padding: 14px 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    .accordion-header:hover { opacity: 0.75; }
+    .section-title {
+      font-family: var(--font-title);
+      font-size: 1.55rem;
+      color: var(--black);
+      letter-spacing: 0.5px;
+      font-weight: 400;
+    }
+    .acc-icon {
+      font-size: 0.75rem;
+      font-weight: 700;
+      transition: transform 0.2s;
+    }
+    .accordion-item.active .acc-icon { transform: rotate(180deg); }
+    .accordion-body { display: none; padding-bottom: 16px; }
+    .accordion-item.active .accordion-body { display: block; }
+
+    /* Botones e Inputs */
+    .btn-black {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--black);
+      color: var(--white);
+      border: 1px solid var(--black);
+      padding: 12px 14px;
+      width: 100%;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: opacity 0.15s;
+      text-align: center;
+    }
+    .btn-black:hover { opacity: 0.88; }
+
+    .btn-picker {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid var(--black);
+      background: var(--white);
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--black);
+      transition: all 0.15s;
+    }
+    .btn-picker:hover { background: #f0f0f0; }
+    .btn-picker.active {
+      background: var(--black);
+      color: var(--white);
+      border-color: var(--black);
+    }
+
+    .btn-blue {
+      background: var(--accent-dark);
+      color: var(--white);
+      border: none;
+      padding: 13px;
+      width: 100%;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.98rem;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--accent-shadow);
+      transition: background 0.15s, transform 0.1s;
+      flex: 1;
+    }
+    .btn-blue:hover { background: var(--accent); }
+    .btn-blue:active { transform: translateY(2px); box-shadow: none; }
+
+    .text-input, .custom-select {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--black);
+      background: var(--white);
+      outline: none;
+    }
+
+    .res-badge {
+      display: none;
+      font-size: 0.82rem;
+      color: var(--black);
+      margin-top: 8px;
+      font-weight: 600;
+      background: #f4f4f4;
+      padding: 7px 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    /* Módulo de calidad / upscale IA */
+    .quality-card {
+      display: none;
+      margin-top: 12px;
+      border: 1px solid var(--black);
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--white);
+    }
+    .quality-header {
+      padding: 10px 12px;
+      background: var(--black);
+      color: var(--white);
+      font-weight: 700;
+      font-size: 0.82rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .quality-body { padding: 12px; }
+    .quality-alert {
+      padding: 10px 12px;
+      border: 1px solid var(--black);
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    .quality-alert .alert-title { font-size: 0.88rem; font-weight: 800; }
+    .quality-alert .alert-desc { font-size: 0.8rem; color: #444; margin-top: 3px; }
+
+    /* Sliders y cajas */
+    .control-row { margin-bottom: 12px; }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .ctrl-label { font-size: 0.8rem; font-weight: 700; color: #333; letter-spacing: 0.02em; }
+    .ctrl-value { font-size: 0.82rem; font-weight: 800; color: var(--black); font-variant-numeric: tabular-nums; }
+    .range-slider {
+      width: 100%;
+      cursor: pointer;
+      height: 6px;
+      accent-color: var(--accent);
+    }
+
+    .box-card {
+      background: var(--gray-panel);
+      padding: 11px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 12px;
+    }
+
+    .row-flex { display: flex; gap: 8px; align-items: stretch; }
+    .row-flex > * { flex: 1; }
+
+    /* Botones de forma */
+    .shape-group { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 6px; }
+    .shape-btn {
+      width: 44px;
+      height: 40px;
+      background: var(--white);
+      border: 1px solid var(--black);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .shape-btn.active {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    /* Fondos de vista previa */
+    .bg-selector-group { display: flex; gap: 9px; align-items: center; margin-top: 6px; }
+    .bg-swatch {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid #ccc;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .bg-swatch:hover { transform: scale(1.08); }
+    .bg-swatch.active {
+      border: 3px solid var(--accent);
+      transform: scale(1.08);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .bg-swatch.transparent {
+      background-image: conic-gradient(#ccc 90deg, #fff 90deg 180deg, #ccc 180deg 270deg, #fff 270deg);
+      background-size: 14px 14px;
+    }
+    .bg-swatch.black { background: #000; }
+    .bg-swatch.grey { background: #888; }
+    .bg-swatch.white { background: #fff; }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--black);
+      background: var(--gray-panel);
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 12px;
+      user-select: none;
+    }
+    .checkbox-label input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+    .mini-checklist {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--black);
+      background: var(--white);
+      padding: 8px;
+      border-radius: 5px;
+      text-align: center;
+      border: 1px solid #ccc;
+      margin-bottom: 12px;
+      letter-spacing: 0.4px;
+    }
+
+    .sr-only-file {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ==================== Editor / Lienzo ==================== */
+    .editor-area {
+      flex: 1;
+      background-color: var(--gray-bg);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .canvas-scroll-container {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      cursor: grab;
+      user-select: none;
+    }
+    .canvas-scroll-container:active { cursor: grabbing; }
+    .canvas-scroll-container.picking { cursor: crosshair !important; }
+
+    .canvas-empty-state {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--white);
+      text-align: center;
+      cursor: pointer;
+      border: 3px dashed #888;
+      padding: 55px 70px;
+      border-radius: 14px;
+      background: rgba(24,24,24,0.95);
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.22);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .canvas-empty-state:hover,
+    .canvas-empty-state.dragover {
+      border-color: var(--accent);
+      transform: translate(-50%, -50%) scale(1.02);
+    }
+    .canvas-empty-state h3 {
+      font-family: var(--font-title);
+      font-size: 2rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+    .canvas-empty-state p { font-size: 0.95rem; color: #bbb; }
+
+    .canvas-viewport {
+      position: absolute;
+      left: 0;
+      top: 0;
+      box-shadow: 0 0 45px rgba(0,0,0,0.45);
+      line-height: 0;
+      transform-origin: 0 0;
+      border: 1px solid #444;
+      will-change: transform;
+      display: none;
+    }
+    #preview-canvas { background: transparent; max-width: none; }
+    #preview-canvas.crisp { image-rendering: pixelated; }
+
+    /* Controles flotantes del visor */
+    .control-panel-wrapper {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      z-index: 6;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .panel-group {
+      background: var(--white);
+      border-radius: 8px;
+      padding: 5px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-dpad {
+      display: grid;
+      grid-template-columns: 32px 32px 32px;
+      grid-template-rows: 32px 32px;
+      gap: 4px;
+      padding: 6px;
+    }
+    .nav-dpad .up { grid-column: 2; grid-row: 1; }
+    .nav-dpad .left { grid-column: 1; grid-row: 2; }
+    .nav-dpad .down { grid-column: 2; grid-row: 2; }
+    .nav-dpad .right { grid-column: 3; grid-row: 2; }
+
+    .ctrl-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #ccc;
+      background: var(--white);
+      color: var(--black);
+      border-radius: 4px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+    }
+    .ctrl-btn:hover { background: #f2f2f2; border-color: #999; }
+
+    .preview-badge {
+      background: rgba(0,0,0,0.75);
+      color: var(--white);
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    #canvas-success-badge {
+      display: none;
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: var(--white);
+      padding: 10px 22px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      z-index: 100;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+      pointer-events: none;
+    }
+
+    /* Modales */
+    #loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(20,20,20,0.9);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      color: var(--white);
+      flex-direction: column;
+      text-align: center;
+      gap: 8px;
+    }
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid rgba(255,255,255,0.25);
+      border-radius: 50%;
+      border-top-color: var(--accent);
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #crop-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .crop-dialog {
+      background: var(--white);
+      padding: 22px;
+      border-radius: 10px;
+      max-width: 780px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .crop-stage {
+      width: 100%;
+      height: 50vh;
+      background: #eee;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 12px 0 18px 0;
+    }
+    .crop-stage img { max-width: 100%; max-height: 100%; display: block; }
+
+    @media (max-width: 900px) {
+      html, body { height: auto; overflow-y: auto; }
+      .app-interface { flex-direction: column; height: auto; }
+      .sidebar { width: 100%; min-width: 100%; height: auto; border-right: none; }
+      .sidebar-scroll { overflow: visible; padding-bottom: 20px; }
+      .editor-area { height: 62vh; width: 100%; border-top: 1px solid #444; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loader global -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <p id="loading-text" style="font-weight:700; font-size:1rem;">Procesando...</p>
+    <small id="loading-sub" style="color:#ccc; font-size:0.85rem;">Cargando imagen</small>
+  </div>
+
+  <!-- Modal de recorte -->
+  <div id="crop-modal">
+    <div class="crop-dialog">
+      <h3 style="font-family:var(--font-title); font-size:1.9rem; font-weight:400;">RECORTAR IMAGEN</h3>
+      <p style="font-size:0.85rem; color:#666;">Ajusta el área que deseas conservar.</p>
+      <div class="crop-stage">
+        <img id="crop-image" src="" alt="Recorte" />
+      </div>
+      <div class="row-flex" style="width:100%; max-width:340px;">
+        <button type="button" class="btn-picker" onclick="closeCrop()">Cancelar</button>
+        <button type="button" class="btn-black" onclick="applyCrop()">Aplicar Recorte</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="app-interface">
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1 class="brand-title">SEMITONOS PRO</h1>
+        <p class="brand-subtitle">Elimina el fondo y crea semitonos listos para impresión en DTF.</p>
+        <div class="divider"></div>
+      </div>
+
+      <div class="sidebar-scroll">
+        <!-- 01. ARCHIVO -->
+        <div class="accordion-item active">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h2 class="section-title">01. ARCHIVO</h2>
+            <span class="acc-icon">▼</span>
+          </div>
+          <div class="accordion-body">
+            <input type="file" id="file-upload" accept="image/*" class="sr-only-file" onchange="handleFileInput(this)" />
+            <label for="file-upload" class="btn-black">+ SELECCIONAR IMAGEN</label>
+
+            <div class="row-flex" style="margin-top:10px;">
+              <input type="text" id="file-name-input" class="text-input" value="mi-diseno-dtf" style="flex:2;" />
+              <button type="button" class="btn-black" style="flex:1; padding:0 10px; font-size:0.8rem;" onclick="openCropModal()">RECORTAR</button>
+            </div>
+
+            <div id="image-resolution-info" class="res-badge">
+              <span id="res-px">0 × 0 px</span> &nbsp;|&nbsp; <span id="res-cm">0.0 × 0.0 cm</span>
+            </div>
+
+            <!-- Asistente de calidad y Upscale IA -->
+            <div id="quality-module" class="quality-card">
+              <div class="quality-header" onclick="toggleQualityModule()">
+                <span>ASISTENTE DE CALIDAD (IA)</span>
+                <span id="quality-icon">▲</span>
+              </div>
+              <div id="quality-body" class="quality-body">
+                <div id="quality-alert-box" class="quality-alert">
+                  <p id="quality-alert-title" class="alert-title">CALIDAD DETECTADA</p>
+                  <p id="quality-alert-desc" class="alert-desc"></p>
+                </div>
+                <label style="font-size:0.78rem; font-weight:800; display:block; margin-bottom:5px;">OPCIONES DE MEJORA (IA):</label>
+                <select id="upscale-factor" class="custom-select" style="margin-bottom:8px;">
+                  <option value="2">Escalar ×2 (Real-ESRGAN IA)</option>
+                  <option value="4">Escalar ×4 (Alta Definición IA)</option>
+                </select>
+                <button type="button" class="btn-blue" style="padding:10px; font-size:0.88rem;" onclick="inPlaceUpscale()">MEJORAR RESOLUCIÓN</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 02. AJUSTES DE IMAGEN (EN VIVO) -->
+        <div class="accordion-item active">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h2 class="section-title">02. AJUSTES EN VIVO</h2>
+            <span class="acc-icon">▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="control-row">
+              <div class="slider-header">
+                <span class="ctrl-label">BRILLO</span>
+                <span class="ctrl-value" id="val-brightness">0</span>
+              </div>
+              <input type="range" id="cfg-brightness" min="-50" max="50" value="0" step="1" class="range-slider" />
+            </div>
+
+            <div class="control-row">
+              <div class="slider-header">
+                <span class="ctrl-label">CONTRASTE</span>
+                <span class="ctrl-value" id="val-contrast">0</span>
+              </div>
+              <input type="range" id="cfg-contrast" min="-50" max="70" value="0" step="1" class="range-slider" />
+            </div>
+
+            <div class="control-row">
+              <div class="slider-header">
+                <span class="ctrl-label">NITIDEZ</span>
+                <span class="ctrl-value" id="val-sharpen">0</span>
+              </div>
+              <input type="range" id="cfg-sharpen" min="0" max="100" value="0" step="5" class="range-slider" />
+            </div>
+
+            <button type="button" class="btn-picker" style="padding:7px; font-size:0.78rem;" onclick="resetEnhancements()">RESTABLECER AJUSTES</button>
+          </div>
+        </div>
+
+        <!-- 03. EDICIÓN Y SEMITONO -->
+        <div class="accordion-item active">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h2 class="section-title">03. EDICIÓN Y SEMITONO</h2>
+            <span class="acc-icon">▼</span>
+          </div>
+          <div class="accordion-body">
+            <label class="ctrl-label" style="display:block; margin-bottom:6px;">COLOR A ELIMINAR:</label>
+            <div class="row-flex" style="margin-bottom:10px;">
+              <button type="button" id="btn-eyedropper" class="btn-picker" style="flex:1.7;" onclick="activateEyedropper()">TOMAR MUESTRA</button>
+              <div class="box-card" style="flex:1.1; margin:0; padding:5px 8px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <span style="font-size:0.65rem; font-weight:700; color:#555;">COLOR:</span>
+                <div style="display:flex; align-items:center; gap:5px; margin-top:2px;">
+                  <input type="color" id="cfg-chroma" value="#000000" style="width:22px; height:22px; border:none; padding:0; cursor:pointer; background:none;" />
+                  <span id="chroma-hex" style="font-size:0.74rem; font-weight:800;">#000000</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="box-card">
+              <div class="slider-header">
+                <span class="ctrl-label">FUERZA DE BORRADO</span>
+                <span class="ctrl-value" id="val-tolerance">85%</span>
+              </div>
+              <input type="range" id="cfg-tolerance" min="0" max="100" value="85" step="1" class="range-slider" />
+            </div>
+
+            <div class="box-card">
+              <span class="ctrl-label">FORMA DEL PUNTO:</span>
+              <div class="shape-group">
+                <button type="button" class="shape-btn" onclick="setShape('none', this)" title="Sin trama (solo recorte)">SIN</button>
+                <button type="button" class="shape-btn active" onclick="setShape('circle', this)" title="Círculo">●</button>
+                <button type="button" class="shape-btn" onclick="setShape('round_square', this)" title="Cuadrado Suave">■</button>
+                <button type="button" class="shape-btn" onclick="setShape('line', this)" title="Línea">≡</button>
+                <button type="button" class="shape-btn" onclick="setShape('ellipse', this)" title="Elipse">⬮</button>
+                <button type="button" class="shape-btn" onclick="setShape('noise', this)" title="Ruido / Difusión">░</button>
+              </div>
+            </div>
+
+            <label class="checkbox-label">
+              <input type="checkbox" id="preview-white-stroke" />
+              <span>Previsualizar posibles bordes blancos</span>
+            </label>
+
+            <div id="halftone-controls">
+              <div class="control-row">
+                <div class="slider-header">
+                  <span class="ctrl-label">LINEATURA (LPI)</span>
+                  <span class="ctrl-value" id="val-lpi">22 LPI</span>
+                </div>
+                <input type="range" id="cfg-lpi" min="5" max="100" value="22" step="1" class="range-slider" />
+              </div>
+
+              <div class="control-row">
+                <div class="slider-header">
+                  <span class="ctrl-label">ÁNGULO</span>
+                  <span class="ctrl-value" id="val-angle">40°</span>
+                </div>
+                <input type="range" id="cfg-angle" min="-180" max="180" value="40" step="1" class="range-slider" />
+              </div>
+            </div>
+
+            <!-- Goma y Recuperar -->
+            <div class="row-flex" style="margin:12px 0 8px 0;">
+              <button type="button" id="btn-eraser" class="btn-picker" onclick="toggleEraser()">GOMA</button>
+              <button type="button" id="btn-restore" class="btn-picker" onclick="toggleRestore()">RECUPERAR</button>
+            </div>
+
+            <div class="box-card" id="eraser-controls" style="display:none;">
+              <div class="slider-header">
+                <span class="ctrl-label">TAMAÑO DEL PINCEL</span>
+                <span class="ctrl-value" id="val-eraser-size">25px</span>
+              </div>
+              <input type="range" id="cfg-eraser-size" min="2" max="200" value="25" step="1" class="range-slider" />
+            </div>
+
+            <!-- Fondo de vista previa (solo visual) -->
+            <div class="box-card">
+              <span class="ctrl-label">VISTA PREVIA DEL FONDO (no se descarga):</span>
+              <div class="bg-selector-group">
+                <button type="button" class="bg-swatch transparent active" onclick="setPreviewBg('transparent', this)" title="Transparente"></button>
+                <button type="button" class="bg-swatch black" onclick="setPreviewBg('black', this)" title="Negro"></button>
+                <button type="button" class="bg-swatch grey" onclick="setPreviewBg('grey', this)" title="Gris"></button>
+                <button type="button" class="bg-swatch white" onclick="setPreviewBg('white', this)" title="Blanco"></button>
+                <div style="position:relative; width:38px; height:38px;">
+                  <input type="color" id="custom-bg-color" value="#1e3a8a" style="opacity:0; position:absolute; inset:0; width:100%; height:100%; cursor:pointer; z-index:2;" oninput="setCustomBg(this.value)" />
+                  <button type="button" class="bg-swatch" id="custom-bg-btn" style="background:conic-gradient(red, yellow, lime, aqua, blue, magenta, red); position:absolute; inset:0; z-index:1;" title="Color personalizado"></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Calidad y PPI -->
+            <div class="box-card" style="margin-bottom:0;">
+              <label class="ctrl-label" style="display:block; margin-bottom:5px;">CALIDAD DE PREVISUALIZACIÓN:</label>
+              <select id="preview-quality" class="custom-select" style="margin-bottom:10px;">
+                <option value="media" selected>Media (Fluida · Recomendada)</option>
+                <option value="original">Original (Máxima calidad)</option>
+                <option value="baja">Baja (Máxima velocidad)</option>
+              </select>
+
+              <label class="ctrl-label" style="display:block; margin-bottom:5px;">RESOLUCIÓN DE SEMITONO (PPI):</label>
+              <select id="export-ppi" class="custom-select">
+                <option value="300" selected>300 PPI (Estándar DTF)</option>
+                <option value="600">600 PPI (Alta Definición)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 04. EXPORTAR -->
+        <div class="accordion-item active">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h2 class="section-title">04. EXPORTAR</h2>
+            <span class="acc-icon">▼</span>
+          </div>
+          <div class="accordion-body">
+            <div id="bad-provider-container" style="display:none;">
+              <label class="checkbox-label">
+                <input type="checkbox" id="bad-provider-toggle" />
+                <span>Aplicar corrección para imprenta (borde sólido)</span>
+              </label>
+            </div>
+
+            <div class="mini-checklist">
+              SEMITONO 300/600 DPI • SIN FONDO • SIN SEMITRANSPARENCIAS
+            </div>
+
+            <div class="row-flex">
+              <button type="button" class="btn-blue" onclick="exportFinal('png')">DESCARGAR PNG</button>
+              <button type="button" class="btn-blue" onclick="exportFinal('pdf')">DESCARGAR PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ==================== VISOR / LIENZO ==================== -->
+    <main class="editor-area">
+      <div class="control-panel-wrapper">
+        <div class="panel-group">
+          <button type="button" class="ctrl-btn" onclick="undoAction()" title="Deshacer (Ctrl+Z)">↩</button>
+          <div style="width:1px; height:20px; background:#ddd; margin:0 2px;"></div>
+          <button type="button" class="ctrl-btn" onclick="adjustZoom(-0.15)" title="Alejar">−</button>
+          <button type="button" class="ctrl-btn" onclick="resetView()" title="Centrar lienzo">C</button>
+          <button type="button" class="ctrl-btn" onclick="adjustZoom(0.15)" title="Acercar">+</button>
+        </div>
+        <div class="panel-group nav-dpad">
+          <button type="button" class="ctrl-btn up" onclick="panCanvas(0, 60)" title="Arriba">↑</button>
+          <button type="button" class="ctrl-btn left" onclick="panCanvas(60, 0)" title="Izquierda">←</button>
+          <button type="button" class="ctrl-btn down" onclick="panCanvas(0, -60)" title="Abajo">↓</button>
+          <button type="button" class="ctrl-btn right" onclick="panCanvas(-60, 0)" title="Derecha">→</button>
+        </div>
+        <div class="preview-badge" id="mode-badge">RUEDA: ZOOM · ARRASTRAR: MOVER</div>
+      </div>
+
+      <div class="canvas-scroll-container" id="scrollable-container">
+        <div id="canvas-success-badge">IMAGEN MEJORADA CON IA</div>
+
+        <label for="file-upload" id="canvas-placeholder" class="canvas-empty-state">
+          <h3>Sube tu archivo o pégalo aquí</h3>
+          <p>Haz clic, arrastra tu imagen o presiona CTRL + V</p>
+        </label>
+
+        <div class="canvas-viewport" id="viewport-container">
+          <canvas id="preview-canvas"></canvas>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <script>
+    // Si index.html está en el mismo proyecto de Vercel, déjalo vacío "".
+    // Si lo abres desde otro dominio, pon tu URL: "https://tu-proyecto.vercel.app"
+    const API_BASE = "";
+
+    // ==================== Estado Global ====================
+    let originalImgObject = null;
+    let editedCanvas = null, editedCtx = null;
+    let restoreCanvas = null, restoreCtx = null;
+    let eraserMaskCanvas = null, eraserMaskCtx = null;
+    let historyStack = [];
+    let cropperInstance = null;
+
+    let currentZoom = 0.5;
+    let panX = 0, panY = 0;
+    let pScale = 1;
+
+    let isDragging = false, startDragX = 0, startDragY = 0;
+    let isPickerActive = false;
+    let isEraserActive = false, isRestoreActive = false;
+    let eraserSize = 25;
+    let isErasing = false, lastEx = 0, lastEy = 0;
+    let isAltPressed = false;
+    let renderScheduled = false;
+
+    const config = {
+      brightness: 0,
+      contrast: 0,
+      sharpen: 0,
+      chromaColor: { r: 0, g: 0, b: 0 },
+      tolerance: 85,
+      lpi: 22,
+      ppi: 300,
+      dotSize: 300 / 22,
+      angle: 40,
+      shape: 'circle',
+      chromaActive: false
+    };
+
+    const previewCanvas = document.getElementById('preview-canvas');
+    const previewCtx = previewCanvas.getContext('2d', { willReadFrequently: true });
+    const viewport = document.getElementById('viewport-container');
+    const scrollContainer = document.getElementById('scrollable-container');
+    const loader = document.getElementById('loading-overlay');
+    const btnPicker = document.getElementById('btn-eyedropper');
+    const canvasPlaceholder = document.getElementById('canvas-placeholder');
+    const fileNameInput = document.getElementById('file-name-input');
+    const badProviderToggle = document.getElementById('bad-provider-toggle');
+
+    // ==================== Acordeones y UI ====================
+    function toggleAccordion(header) {
+      header.parentElement.classList.toggle('active');
+    }
+
+    function toggleQualityModule() {
+      const body = document.getElementById('quality-body');
+      const icon = document.getElementById('quality-icon');
+      const hidden = body.style.display === 'none';
+      body.style.display = hidden ? 'block' : 'none';
+      icon.innerText = hidden ? '▲' : '▼';
+    }
+
+    function showLoader(title, sub) {
+      document.getElementById('loading-text').innerText = title || 'Procesando...';
+      document.getElementById('loading-sub').innerText = sub || '';
+      loader.style.display = 'flex';
+    }
+
+    function hideLoader() {
+      loader.style.display = 'none';
+    }
+
+    function updateResolutionInfo(w, h) {
+      const box = document.getElementById('image-resolution-info');
+      box.style.display = 'block';
+      const cmW = ((w / config.ppi) * 2.54).toFixed(1);
+      const cmH = ((h / config.ppi) * 2.54).toFixed(1);
+      document.getElementById('res-px').innerText = `${w} × ${h} px`;
+      document.getElementById('res-cm').innerText = `${cmW} × ${cmH} cm`;
+
+      const minSide = Math.min(w, h);
+      const qMod = document.getElementById('quality-module');
+      const qTitle = document.getElementById('quality-alert-title');
+      const qDesc = document.getElementById('quality-alert-desc');
+      const factorSel = document.getElementById('upscale-factor');
+      qMod.style.display = 'block';
+
+      if (minSide < 1000) {
+        qTitle.innerText = 'IMAGEN DE BAJA RESOLUCIÓN';
+        qDesc.innerText = 'Recomendado escalar a ×4 con IA para impresión DTF nítida.';
+        factorSel.value = '4';
+      } else if (minSide < 1800) {
+        qTitle.innerText = 'IMAGEN DE CALIDAD REGULAR';
+        qDesc.innerText = 'Recomendado mejorar a ×2 con IA para bordes más definidos.';
+        factorSel.value = '2';
+      } else {
+        qTitle.innerText = 'IMAGEN EN CALIDAD ÓPTIMA';
+        qDesc.innerText = 'Lista para DTF. Puedes escalar a ×2 si deseas mayor detalle.';
+        factorSel.value = '2';
+      }
+    }
+
+    function computePreviewScale() {
+      if (!originalImgObject) return 1;
+      const q = document.getElementById('preview-quality').value;
+      const maxDim = q === 'baja' ? 800 : q === 'media' ? 1400 : Infinity;
+      if (originalImgObject.width > maxDim || originalImgObject.height > maxDim) {
+        return Math.min(maxDim / originalImgObject.width, maxDim / originalImgObject.height);
+      }
+      return 1;
+    }
+
+    // ==================== Fondos de vista previa (solo visual) ====================
+    function setPreviewBg(type, btn) {
+      document.querySelectorAll('.bg-swatch').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      if (type === 'transparent') {
+        viewport.style.backgroundColor = '#ccc';
+        viewport.style.backgroundImage = 'conic-gradient(#ccc 90deg, #fff 90deg 180deg, #ccc 180deg 270deg, #fff 270deg)';
+        viewport.style.backgroundSize = '20px 20px';
+      } else if (type === 'black') {
+        viewport.style.backgroundColor = '#000';
+        viewport.style.backgroundImage = 'none';
+      } else if (type === 'white') {
+        viewport.style.backgroundColor = '#fff';
+        viewport.style.backgroundImage = 'none';
+      } else if (type === 'grey') {
+        viewport.style.backgroundColor = '#888';
+        viewport.style.backgroundImage = 'none';
+      }
+    }
+    setPreviewBg('transparent', document.querySelector('.bg-swatch.transparent'));
+
+    function setCustomBg(hex) {
+      document.querySelectorAll('.bg-swatch').forEach(b => b.classList.remove('active'));
+      const btn = document.getElementById('custom-bg-btn');
+      btn.classList.add('active');
+      btn.style.background = hex;
+      viewport.style.backgroundColor = hex;
+      viewport.style.backgroundImage = 'none';
+    }
+
+    // ==================== Carga de imagen (clic + drag&drop + Ctrl+V) ====================
+    function handleFileInput(inputEl) {
+      if (inputEl && inputEl.files && inputEl.files[0]) {
+        loadImageFile(inputEl.files[0]);
+        inputEl.value = '';
+      }
+    }
+
+    function loadImageFile(file) {
+      if (!file) return;
+      fileNameInput.value = (file.name || 'diseno-dtf').replace(/\.[^/.]+$/, '');
+      showLoader('Cargando imagen...', 'Preparando lienzo DTF');
+
+      const objUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(objUrl);
+        originalImgObject = img;
+        config.chromaActive = false;
+        btnPicker.style.backgroundColor = '';
+        btnPicker.style.color = '';
+        btnPicker.style.borderColor = '';
+
+        canvasPlaceholder.style.display = 'none';
+        viewport.style.display = 'block';
+
+        editedCanvas = document.createElement('canvas');
+        editedCanvas.width = img.width;
+        editedCanvas.height = img.height;
+        editedCtx = editedCanvas.getContext('2d', { willReadFrequently: true });
+        editedCtx.drawImage(img, 0, 0);
+
+        restoreCanvas = document.createElement('canvas');
+        restoreCanvas.width = img.width;
+        restoreCanvas.height = img.height;
+        restoreCtx = restoreCanvas.getContext('2d', { willReadFrequently: true });
+
+        eraserMaskCanvas = document.createElement('canvas');
+        eraserMaskCanvas.width = img.width;
+        eraserMaskCanvas.height = img.height;
+        eraserMaskCtx = eraserMaskCanvas.getContext('2d', { willReadFrequently: true });
+
+        historyStack = [];
+        pScale = computePreviewScale();
+        updateResolutionInfo(img.width, img.height);
+        renderPreviewNow();
+        resetView();
+        hideLoader();
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objUrl);
+        hideLoader();
+        alert('No se pudo cargar este archivo. Usa PNG, JPG o WebP.');
+      };
+      img.src = objUrl;
+    }
+
+    ['dragenter', 'dragover'].forEach(evt => {
+      window.addEventListener(evt, (e) => {
+        e.preventDefault();
+        canvasPlaceholder.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+      window.addEventListener(evt, (e) => {
+        e.preventDefault();
+        canvasPlaceholder.classList.remove('dragover');
+      });
+    });
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) loadImageFile(file);
+    });
+    window.addEventListener('paste', (e) => {
+      if (!e.clipboardData || !e.clipboardData.items) return;
+      for (const item of e.clipboardData.items) {
+        if (item.type.includes('image')) {
+          const file = item.getAsFile();
+          if (file) loadImageFile(file);
+          break;
+        }
+      }
+    });
+
+    // ==================== Zoom y Navegación ====================
+    function updateTransform() {
+      viewport.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+      previewCanvas.classList.toggle('crisp', currentZoom >= 1.8);
+    }
+
+    function adjustZoom(delta) {
+      if (!originalImgObject) return;
+      const rect = scrollContainer.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const canvasX = (cx - panX) / currentZoom;
+      const canvasY = (cy - panY) / currentZoom;
+
+      currentZoom = Math.max(0.05, Math.min(10, currentZoom + delta));
+      panX = cx - canvasX * currentZoom;
+      panY = cy - canvasY * currentZoom;
+      updateTransform();
+      if (!isAltPressed) updateBrushCursor();
+    }
+
+    function resetView() {
+      if (!originalImgObject) return;
+      const cw = scrollContainer.clientWidth;
+      const ch = scrollContainer.clientHeight;
+      const iw = previewCanvas.width;
+      const ih = previewCanvas.height;
+      currentZoom = Math.min(cw / iw, ch / ih) * 0.88;
+      if (currentZoom > 1) currentZoom = 0.8;
+      panX = (cw - iw * currentZoom) / 2;
+      panY = (ch - ih * currentZoom) / 2;
+      updateTransform();
+      if (!isAltPressed) updateBrushCursor();
+    }
+
+    function panCanvas(dx, dy) {
+      if (!originalImgObject) return;
+      panX += dx;
+      panY += dy;
+      updateTransform();
+    }
+
+    scrollContainer.addEventListener('wheel', (e) => {
+      if (!originalImgObject) return;
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.14 : 1 / 1.14;
+      const rect = scrollContainer.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const canvasX = (mx - panX) / currentZoom;
+      const canvasY = (my - panY) / currentZoom;
+
+      currentZoom = Math.max(0.05, Math.min(10, currentZoom * factor));
+      panX = mx - canvasX * currentZoom;
+      panY = my - canvasY * currentZoom;
+      updateTransform();
+      if (!isAltPressed) updateBrushCursor();
+    }, { passive: false });
+
+    scrollContainer.addEventListener('mousedown', (e) => {
+      if (!originalImgObject || e.button !== 0) return;
+      if ((isPickerActive || isEraserActive || isRestoreActive) && !isAltPressed) return;
+      isDragging = true;
+      startDragX = e.clientX - panX;
+      startDragY = e.clientY - panY;
+      scrollContainer.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      panX = e.clientX - startDragX;
+      panY = e.clientY - startDragY;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      if (isAltPressed) scrollContainer.style.cursor = 'grab';
+      else if (isEraserActive || isRestoreActive) updateBrushCursor();
+      else if (isPickerActive) scrollContainer.style.cursor = 'crosshair';
+      else scrollContainer.style.cursor = 'grab';
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Alt') {
+        e.preventDefault();
+        isAltPressed = true;
+        scrollContainer.style.cursor = 'grab';
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undoAction();
+      }
+      if (e.key === 'Escape' && isPickerActive) activateEyedropper();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'Alt') {
+        isAltPressed = false;
+        if (isEraserActive || isRestoreActive) updateBrushCursor();
+        else if (isPickerActive) scrollContainer.style.cursor = 'crosshair';
+        else scrollContainer.style.cursor = 'grab';
+      }
+    });
+
+    // ==================== Mejoras en vivo (Brillo, Contraste, Nitidez) ====================
+    function applyUnsharpMaskChunked(ctx, w, h, amount) {
+      if (amount <= 0.01) return;
+      const stripH = 512;
+      const strength = amount * 2.1;
+
+      for (let y0 = 0; y0 < h; y0 += stripH) {
+        const readY = Math.max(0, y0 - 1);
+        const readBottom = Math.min(h, y0 + stripH + 1);
+        const src = ctx.getImageData(0, readY, w, readBottom - readY);
+        const s = src.data;
+        const writeH = Math.min(stripH, h - y0);
+        const out = ctx.createImageData(w, writeH);
+        const d = out.data;
+        const offsetY = y0 - readY;
+
+        for (let ly = 0; ly < writeH; ly++) {
+          const sy = ly + offsetY;
+          const gy = y0 + ly;
+          const outRow = ly * w;
+          const srcRow = sy * w;
+
+          for (let x = 0; x < w; x++) {
+            const oIdx = (outRow + x) * 4;
+            const sIdx = (srcRow + x) * 4;
+            d[oIdx + 3] = s[sIdx + 3];
+
+            if (gy === 0 || gy === h - 1 || x === 0 || x === w - 1 || s[sIdx + 3] === 0) {
+              d[oIdx] = s[sIdx];
+              d[oIdx + 1] = s[sIdx + 1];
+              d[oIdx + 2] = s[sIdx + 2];
+              continue;
+            }
+            const up = ((sy - 1) * w + x) * 4;
+            const dn = ((sy + 1) * w + x) * 4;
+            const lf = (srcRow + x - 1) * 4;
+            const rt = (srcRow + x + 1) * 4;
+
+            for (let c = 0; c < 3; c++) {
+              const center = s[sIdx + c];
+              const blur = (s[up + c] + s[dn + c] + s[lf + c] + s[rt + c]) * 0.25;
+              const val = center + (center - blur) * strength;
+              d[oIdx + c] = val < 0 ? 0 : val > 255 ? 255 : val;
+            }
+          }
+        }
+        ctx.putImageData(out, 0, y0);
+      }
+    }
+
+    function applyLiveEnhancements(ctx, w, h) {
+      if (config.brightness !== 0 || config.contrast !== 0) {
+        const factor = (259 * (config.contrast + 255)) / (255 * (259 - config.contrast));
+        const stripH = 512;
+        for (let y0 = 0; y0 < h; y0 += stripH) {
+          const ch = Math.min(stripH, h - y0);
+          const imgData = ctx.getImageData(0, y0, w, ch);
+          const data = imgData.data;
+          for (let i = 0; i < data.length; i += 4) {
+            if (data[i + 3] === 0) continue;
+            for (let c = 0; c < 3; c++) {
+              const v = factor * (data[i + c] - 128) + 128 + config.brightness;
+              data[i + c] = v < 0 ? 0 : v > 255 ? 255 : v;
+            }
+          }
+          ctx.putImageData(imgData, 0, y0);
+        }
+      }
+      if (config.sharpen > 0.01) {
+        applyUnsharpMaskChunked(ctx, w, h, config.sharpen);
+      }
+    }
+
+    function resetEnhancements() {
+      config.brightness = 0;
+      config.contrast = 0;
+      config.sharpen = 0;
+      document.getElementById('cfg-brightness').value = 0;
+      document.getElementById('cfg-contrast').value = 0;
+      document.getElementById('cfg-sharpen').value = 0;
+      document.getElementById('val-brightness').innerText = '0';
+      document.getElementById('val-contrast').innerText = '0';
+      document.getElementById('val-sharpen').innerText = '0';
+      schedulePreview();
+    }
+
+    // ==================== Escalado con IA (Vercel + fal.ai Real-ESRGAN) ====================
+    async function inPlaceUpscale() {
+      if (!originalImgObject) return;
+      const scale = parseInt(document.getElementById('upscale-factor').value, 10) || 2;
+
+      showLoader(`Mejorando con IA (×${scale})...`, 'Subiendo imagen al motor Real-ESRGAN');
+
+      try {
+        const temp = document.createElement('canvas');
+        temp.width = editedCanvas.width;
+        temp.height = editedCanvas.height;
+        const tCtx = temp.getContext('2d');
+        tCtx.fillStyle = '#ffffff';
+        tCtx.fillRect(0, 0, temp.width, temp.height);
+        tCtx.drawImage(editedCanvas, 0, 0);
+
+        const base64Data = temp.toDataURL('image/jpeg', 0.92);
+        if (base64Data.length > 4300000) {
+          hideLoader();
+          alert('La imagen supera el límite de 4.5 MB para envío a IA. Recórtala o reduce su tamaño antes de escalar.');
+          return;
+        }
+
+        const submitRes = await fetch(`${API_BASE}/api/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_data: base64Data, scale })
+        });
+
+        if (!submitRes.ok) throw new Error('No se pudo iniciar el proceso de IA (verifica que esté desplegado en Vercel).');
+        const { request_id } = await submitRes.json();
+
+        showLoader(`Mejorando con IA (×${scale})...`, 'Reconstruyendo bordes y detalles...');
+        let imageUrl = null;
+
+        for (let i = 0; i < 45; i++) {
+          await new Promise(r => setTimeout(r, 1500));
+          const checkRes = await fetch(`${API_BASE}/api/check`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id })
+          });
+          const data = await checkRes.json();
+
+          if (data.image && data.image.url) {
+            imageUrl = data.image.url;
+            break;
+          }
+          if (data.status === 'FAILED') throw new Error('El motor de IA falló al procesar la imagen.');
+        }
+
+        if (!imageUrl) throw new Error('Tiempo de espera agotado.');
+
+        showLoader('Aplicando imagen HD...', 'Actualizando lienzo');
+        const newImg = new Image();
+        newImg.crossOrigin = 'anonymous';
+        newImg.onload = () => {
+          originalImgObject = newImg;
+
+          editedCanvas.width = newImg.width;
+          editedCanvas.height = newImg.height;
+          editedCtx.clearRect(0, 0, newImg.width, newImg.height);
+          editedCtx.drawImage(newImg, 0, 0);
+
+          const oldRestore = restoreCanvas;
+          restoreCanvas = document.createElement('canvas');
+          restoreCanvas.width = newImg.width;
+          restoreCanvas.height = newImg.height;
+          restoreCtx = restoreCanvas.getContext('2d', { willReadFrequently: true });
+          restoreCtx.drawImage(oldRestore, 0, 0, newImg.width, newImg.height);
+
+          const oldMask = eraserMaskCanvas;
+          eraserMaskCanvas = document.createElement('canvas');
+          eraserMaskCanvas.width = newImg.width;
+          eraserMaskCanvas.height = newImg.height;
+          eraserMaskCtx = eraserMaskCanvas.getContext('2d', { willReadFrequently: true });
+          eraserMaskCtx.drawImage(oldMask, 0, 0, newImg.width, newImg.height);
+
+          historyStack = [];
+          fileNameInput.value = fileNameInput.value.replace(/_HD$/, '') + '_HD';
+          pScale = computePreviewScale();
+          updateResolutionInfo(newImg.width, newImg.height);
+          renderPreviewNow();
+          resetView();
+          hideLoader();
+
+          const badge = document.getElementById('canvas-success-badge');
+          badge.innerText = `IMAGEN MEJORADA CON IA ×${scale} (${newImg.width}×${newImg.height} px)`;
+          badge.style.display = 'block';
+          setTimeout(() => { badge.style.display = 'none'; }, 3500);
+        };
+        newImg.onerror = () => {
+          hideLoader();
+          alert('No se pudo cargar la imagen devuelta por la IA.');
+        };
+        newImg.src = imageUrl;
+
+      } catch (err) {
+        console.error(err);
+        hideLoader();
+        alert('Error al mejorar con IA: ' + err.message);
+      }
+    }
+
+    // ==================== Recorte con Cropper.js ====================
+    function openCropModal() {
+      if (!originalImgObject) return alert('Sube una imagen primero.');
+      document.getElementById('crop-modal').style.display = 'flex';
+      const cropImg = document.getElementById('crop-image');
+      cropImg.src = editedCanvas.toDataURL('image/png');
+      setTimeout(() => {
+        if (cropperInstance) cropperInstance.destroy();
+        cropperInstance = new Cropper(cropImg, {
+          viewMode: 1,
+          dragMode: 'crop',
+          autoCropArea: 0.85,
+          background: false,
+          zoomable: false,
+          responsive: true
+        });
+      }, 50);
+    }
+
+    function closeCrop() {
+      document.getElementById('crop-modal').style.display = 'none';
+      if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+    }
+
+    function applyCrop() {
+      if (!cropperInstance) return closeCrop();
+      const cropped = cropperInstance.getCroppedCanvas();
+      if (!cropped) return closeCrop();
+
+      const w = cropped.width, h = cropped.height;
+      const cropData = cropperInstance.getData();
+
+      const mCopy = document.createElement('canvas');
+      mCopy.width = w; mCopy.height = h;
+      mCopy.getContext('2d').drawImage(eraserMaskCanvas, cropData.x, cropData.y, w, h, 0, 0, w, h);
+
+      const newImg = new Image();
+      newImg.onload = () => {
+        originalImgObject = newImg;
+        editedCanvas.width = w; editedCanvas.height = h;
+        editedCtx.clearRect(0, 0, w, h);
+        editedCtx.drawImage(newImg, 0, 0);
+
+        restoreCanvas.width = w; restoreCanvas.height = h;
+        restoreCtx.clearRect(0, 0, w, h);
+
+        eraserMaskCanvas.width = w; eraserMaskCanvas.height = h;
+        eraserMaskCtx.clearRect(0, 0, w, h);
+        eraserMaskCtx.drawImage(mCopy, 0, 0);
+
+        historyStack = [];
+        pScale = computePreviewScale();
+        updateResolutionInfo(w, h);
+        renderPreviewNow();
+        resetView();
+        closeCrop();
+      };
+      newImg.src = cropped.toDataURL('image/png');
+    }
+
+    // ==================== Gotero, Goma y Recuperar ====================
+    function getContrastColor(hex) {
+      hex = hex.replace('#', '');
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      return (r * 0.299 + g * 0.587 + b * 0.114) > 186 ? '#181818' : '#FFFFFF';
+    }
+
+    function updateChromaFromHex(hex) {
+      document.getElementById('chroma-hex').innerText = hex.toUpperCase();
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      config.chromaColor = { r, g, b };
+
+      if (config.chromaActive && !isPickerActive) {
+        btnPicker.style.backgroundColor = hex;
+        const c = getContrastColor(hex);
+        btnPicker.style.color = c;
+        btnPicker.style.borderColor = c;
+      }
+    }
+
+    function activateEyedropper() {
+      if (!originalImgObject) return;
+      if (isEraserActive) toggleEraser();
+      if (isRestoreActive) toggleRestore();
+      isPickerActive = !isPickerActive;
+
+      if (isPickerActive) {
+        btnPicker.classList.add('active');
+        btnPicker.innerText = 'CANCELAR';
+        btnPicker.style.backgroundColor = '';
+        btnPicker.style.color = '';
+        btnPicker.style.borderColor = '';
+        scrollContainer.classList.add('picking');
+        scrollContainer.style.cursor = 'crosshair';
+      } else {
+        btnPicker.classList.remove('active');
+        btnPicker.innerText = 'TOMAR MUESTRA';
+        if (config.chromaActive) updateChromaFromHex(document.getElementById('cfg-chroma').value);
+        scrollContainer.classList.remove('picking');
+        scrollContainer.style.cursor = 'grab';
+      }
+    }
+
+    function updateBrushCursor() {
+      if ((!isEraserActive && !isRestoreActive) || isAltPressed) return;
+      const scaledSize = Math.max(Math.round(eraserSize * pScale * currentZoom), 6);
+      const center = Math.round(scaledSize / 2);
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${scaledSize}" height="${scaledSize}" viewBox="0 0 ${scaledSize} ${scaledSize}"><circle cx="${center}" cy="${center}" r="${center - 1}" fill="none" stroke="white" stroke-width="2"/><circle cx="${center}" cy="${center}" r="${Math.max(center - 2, 1)}" fill="none" stroke="black" stroke-width="1"/></svg>`;
+      scrollContainer.style.cursor = `url('data:image/svg+xml;utf8,${encodeURIComponent(svg)}') ${center} ${center}, crosshair`;
+    }
+
+    function toggleEraser() {
+      if (!originalImgObject) return;
+      if (isPickerActive) activateEyedropper();
+      if (isRestoreActive) {
+        isRestoreActive = false;
+        document.getElementById('btn-restore').classList.remove('active');
+        document.getElementById('btn-restore').innerText = 'RECUPERAR';
+      }
+      isEraserActive = !isEraserActive;
+      const btnE = document.getElementById('btn-eraser');
+      const ctrl = document.getElementById('eraser-controls');
+      btnE.classList.toggle('active', isEraserActive);
+      btnE.innerText = isEraserActive ? 'GOMA ACTIVA' : 'GOMA';
+      ctrl.style.display = isEraserActive ? 'block' : 'none';
+      if (isEraserActive) updateBrushCursor();
+      else scrollContainer.style.cursor = 'grab';
+    }
+
+    function toggleRestore() {
+      if (!originalImgObject) return;
+      if (isPickerActive) activateEyedropper();
+      if (isEraserActive) {
+        isEraserActive = false;
+        document.getElementById('btn-eraser').classList.remove('active');
+        document.getElementById('btn-eraser').innerText = 'GOMA';
+      }
+      isRestoreActive = !isRestoreActive;
+      const btnR = document.getElementById('btn-restore');
+      const ctrl = document.getElementById('eraser-controls');
+      btnR.classList.toggle('active', isRestoreActive);
+      btnR.innerText = isRestoreActive ? 'RECUPERAR ACTIVO' : 'RECUPERAR';
+      ctrl.style.display = isRestoreActive ? 'block' : 'none';
+      if (isRestoreActive) updateBrushCursor();
+      else scrollContainer.style.cursor = 'grab';
+    }
+
+    function getCanvasPos(e) {
+      const rect = previewCanvas.getBoundingClientRect();
+      const sx = previewCanvas.width / rect.width;
+      const sy = previewCanvas.height / rect.height;
+      const cx = e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
+      const cy = e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY;
+      return {
+        x: ((cx - rect.left) * sx) / pScale,
+        y: ((cy - rect.top) * sy) / pScale
+      };
+    }
+
+    function pushHistory() {
+      if (!editedCanvas) return;
+      if (historyStack.length >= 6) historyStack.shift();
+      const clone = (c) => {
+        const out = document.createElement('canvas');
+        out.width = c.width; out.height = c.height;
+        out.getContext('2d').drawImage(c, 0, 0);
+        return out;
+      };
+      historyStack.push({
+        e: clone(editedCanvas),
+        r: clone(restoreCanvas),
+        m: clone(eraserMaskCanvas)
+      });
+    }
+
+    function undoAction() {
+      if (!historyStack.length) return;
+      const st = historyStack.pop();
+      editedCtx.clearRect(0, 0, editedCanvas.width, editedCanvas.height);
+      editedCtx.drawImage(st.e, 0, 0);
+      restoreCtx.clearRect(0, 0, restoreCanvas.width, restoreCanvas.height);
+      restoreCtx.drawImage(st.r, 0, 0);
+      eraserMaskCtx.clearRect(0, 0, eraserMaskCanvas.width, eraserMaskCanvas.height);
+      eraserMaskCtx.drawImage(st.m, 0, 0);
+      schedulePreview();
+    }
+
+    function drawBrushStroke(x1, y1, x2, y2) {
+      [editedCtx, restoreCtx].forEach(ctx => {
+        ctx.globalCompositeOperation = isRestoreActive ? 'source-over' : 'destination-out';
+        ctx.lineWidth = eraserSize;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = isRestoreActive ? ctx.createPattern(originalImgObject, 'no-repeat') : '#000';
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.globalCompositeOperation = 'source-over';
+      });
+
+      eraserMaskCtx.lineWidth = eraserSize + 6;
+      eraserMaskCtx.lineCap = 'round';
+      eraserMaskCtx.lineJoin = 'round';
+      eraserMaskCtx.globalCompositeOperation = isRestoreActive ? 'destination-out' : 'source-over';
+      eraserMaskCtx.strokeStyle = isRestoreActive ? 'rgba(0,0,0,1)' : 'rgba(255,0,0,1)';
+      eraserMaskCtx.beginPath();
+      eraserMaskCtx.moveTo(x1, y1);
+      eraserMaskCtx.lineTo(x2, y2);
+      eraserMaskCtx.stroke();
+      eraserMaskCtx.globalCompositeOperation = 'source-over';
+
+      previewCtx.globalCompositeOperation = isRestoreActive ? 'source-over' : 'destination-out';
+      previewCtx.lineWidth = eraserSize * pScale;
+      previewCtx.lineCap = 'round';
+      previewCtx.lineJoin = 'round';
+      if (isRestoreActive) {
+        const pat = previewCtx.createPattern(originalImgObject, 'no-repeat');
+        pat.setTransform(new DOMMatrix().scale(pScale, pScale));
+        previewCtx.strokeStyle = pat;
+      } else {
+        previewCtx.strokeStyle = '#000';
+      }
+      previewCtx.beginPath();
+      previewCtx.moveTo(x1 * pScale, y1 * pScale);
+      previewCtx.lineTo(x2 * pScale, y2 * pScale);
+      previewCtx.stroke();
+      previewCtx.globalCompositeOperation = 'source-over';
+    }
+
+    previewCanvas.addEventListener('click', (e) => {
+      if (!isPickerActive || !originalImgObject || isAltPressed) return;
+      const pos = getCanvasPos(e);
+      const t = document.createElement('canvas');
+      t.width = 1; t.height = 1;
+      const tCtx = t.getContext('2d');
+      tCtx.drawImage(editedCanvas, pos.x, pos.y, 1, 1, 0, 0, 1, 1);
+      const p = tCtx.getImageData(0, 0, 1, 1).data;
+      const hex = '#' + [p[0], p[1], p[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+      config.chromaActive = true;
+      document.getElementById('cfg-chroma').value = hex;
+      updateChromaFromHex(hex);
+      if (p[0] < 50 && p[1] < 50 && p[2] < 50) {
+        setPreviewBg('black', document.querySelector('.bg-swatch.black'));
+      }
+      activateEyedropper();
+      schedulePreview();
+    });
+
+    function onBrushStart(e) {
+      if ((!isEraserActive && !isRestoreActive) || !editedCanvas || isAltPressed) return;
+      isErasing = true;
+      pushHistory();
+      const pos = getCanvasPos(e);
+      lastEx = pos.x; lastEy = pos.y;
+      drawBrushStroke(lastEx, lastEy, pos.x, pos.y);
+    }
+    function onBrushMove(e) {
+      if (!isErasing || isAltPressed) return;
+      e.preventDefault();
+      const pos = getCanvasPos(e);
+      drawBrushStroke(lastEx, lastEy, pos.x, pos.y);
+      lastEx = pos.x; lastEy = pos.y;
+    }
+    function onBrushEnd() {
+      if (!isErasing) return;
+      isErasing = false;
+      schedulePreview();
+    }
+
+    previewCanvas.addEventListener('mousedown', onBrushStart);
+    previewCanvas.addEventListener('mousemove', onBrushMove);
+    window.addEventListener('mouseup', onBrushEnd);
+    previewCanvas.addEventListener('touchstart', onBrushStart, { passive: false });
+    previewCanvas.addEventListener('touchmove', onBrushMove, { passive: false });
+    window.addEventListener('touchend', onBrushEnd);
+
+    // ==================== Motor de Semitono + Chroma Key ====================
+    function runChromaEngine(targetCtx, w, h, srcImg, dotSize, maskData = null) {
+      targetCtx.clearRect(0, 0, w, h);
+      targetCtx.drawImage(srcImg, 0, 0, w, h);
+
+      applyLiveEnhancements(targetCtx, w, h);
+
+      const angleRad = (config.angle * Math.PI) / 180;
+      const cos = Math.cos(angleRad);
+      const sin = Math.sin(angleRad);
+      const tr = config.chromaColor.r;
+      const tg = config.chromaColor.g;
+      const tb = config.chromaColor.b;
+      const maxDist = 441.67;
+      const tolDist = (config.tolerance / 100) * (maxDist * 1.35);
+      const antiHaloThreshold = (config.tolerance / 100) * 0.04;
+      const safeDot = Math.max(2, dotSize);
+      const stripH = 512;
+
+      for (let y0 = 0; y0 < h; y0 += stripH) {
+        const ch = Math.min(stripH, h - y0);
+        const imgData = targetCtx.getImageData(0, y0, w, ch);
+        const data = imgData.data;
+
+        for (let ly = 0; ly < ch; ly++) {
+          const y = y0 + ly;
+          const row = ly * w;
+
+          for (let x = 0; x < w; x++) {
+            const i = (row + x) * 4;
+            const mIdx = (y * w + x) * 4;
+
+            if (maskData && maskData[mIdx] > 0) {
+              data[i + 3] = 0;
+              continue;
+            }
+            if (data[i + 3] < 10) {
+              data[i + 3] = 0;
+              continue;
+            }
+
+            let differenceFactor = 1;
+            if (config.chromaActive) {
+              const dr = data[i] - tr;
+              const dg = data[i + 1] - tg;
+              const db = data[i + 2] - tb;
+              const distRGB = Math.sqrt(dr * dr + dg * dg + db * db);
+              differenceFactor = distRGB > tolDist ? 1 : Math.pow(distRGB / tolDist, 1.3);
+            }
+
+            if (config.shape === 'none') {
+              data[i + 3] = differenceFactor < 0.5 ? 0 : 255;
+              continue;
+            }
+            if (differenceFactor >= 0.99) {
+              data[i + 3] = 255;
+              continue;
+            }
+            if (differenceFactor <= antiHaloThreshold) {
+              data[i + 3] = 0;
+              continue;
+            }
+
+            const rx = x * cos - y * sin;
+            const ry = x * sin + y * cos;
+            const vScaled = differenceFactor * 2 - 1;
+            let inside = false;
+
+            if (config.shape === 'circle') {
+              const spot = (Math.cos(rx * Math.PI * 2 / safeDot) + Math.cos(ry * Math.PI * 2 / safeDot)) * 0.5;
+              inside = vScaled >= spot;
+            } else if (config.shape === 'round_square') {
+              const cx = Math.floor(rx / safeDot) * safeDot + safeDot * 0.5;
+              const cy = Math.floor(ry / safeDot) * safeDot + safeDot * 0.5;
+              const r = (safeDot * 0.5) * Math.SQRT2 * differenceFactor;
+              inside = (Math.pow(Math.abs(rx - cx), 4) + Math.pow(Math.abs(ry - cy), 4)) < Math.pow(r, 4);
+            } else if (config.shape === 'ellipse') {
+              const spot = (Math.cos(rx * Math.PI * 2 / safeDot) + Math.cos(ry * Math.PI * 2 / (safeDot * 0.6))) * 0.5;
+              inside = vScaled >= spot;
+            } else if (config.shape === 'line') {
+              inside = vScaled >= Math.cos(ry * Math.PI * 2 / safeDot);
+            } else if (config.shape === 'noise') {
+              const hash = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+              inside = (hash - Math.floor(hash)) < differenceFactor;
+            }
+
+            data[i + 3] = inside ? 255 : 0;
+          }
+        }
+        targetCtx.putImageData(imgData, 0, y0);
+      }
+    }
+
+    function applyWhiteStrokePreview(ctx, w, h, maskData) {
+      const src = ctx.getImageData(0, 0, w, h);
+      const data = src.data;
+      const out = ctx.createImageData(w, h);
+      out.data.set(data);
+      const o = out.data;
+
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const idx = (y * w + x) * 4;
+          if (data[idx + 3] === 0 && !(maskData && maskData[idx] > 0)) {
+            if (
+              data[((y - 1) * w + x) * 4 + 3] > 0 ||
+              data[((y + 1) * w + x) * 4 + 3] > 0 ||
+              data[(y * w + x - 1) * 4 + 3] > 0 ||
+              data[(y * w + x + 1) * 4 + 3] > 0
+            ) {
+              o[idx] = 255; o[idx + 1] = 255; o[idx + 2] = 255; o[idx + 3] = 255;
+            }
+          }
+        }
+      }
+      ctx.putImageData(out, 0, 0);
+    }
+
+    function schedulePreview() {
+      if (!originalImgObject || renderScheduled) return;
+      renderScheduled = true;
+      requestAnimationFrame(() => {
+        renderScheduled = false;
+        renderPreviewNow();
+      });
+    }
+
+    function renderPreviewNow() {
+      if (!originalImgObject) return;
+      const pW = Math.max(1, Math.round(originalImgObject.width * pScale));
+      const pH = Math.max(1, Math.round(originalImgObject.height * pScale));
+      previewCanvas.width = pW;
+      previewCanvas.height = pH;
+
+      const tempSrc = document.createElement('canvas');
+      tempSrc.width = pW; tempSrc.height = pH;
+      tempSrc.getContext('2d').drawImage(editedCanvas, 0, 0, pW, pH);
+
+      let scaledMaskData = null;
+      if (eraserMaskCanvas) {
+        const tm = document.createElement('canvas');
+        tm.width = pW; tm.height = pH;
+        const tmCtx = tm.getContext('2d', { willReadFrequently: true });
+        tmCtx.drawImage(eraserMaskCanvas, 0, 0, pW, pH);
+        scaledMaskData = tmCtx.getImageData(0, 0, pW, pH).data;
+      }
+
+      runChromaEngine(previewCtx, pW, pH, tempSrc, config.dotSize * pScale, scaledMaskData);
+
+      if (restoreCanvas) {
+        previewCtx.drawImage(restoreCanvas, 0, 0, pW, pH);
+      }
+      if (document.getElementById('preview-white-stroke').checked) {
+        applyWhiteStrokePreview(previewCtx, pW, pH, scaledMaskData);
+      }
+    }
+
+    // ==================== Limpieza y Exportación DTF (PNG con CRC32 + PDF) ====================
+    function removeSemiTransparencies(canvas) {
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      const stripH = 512;
+      for (let y0 = 0; y0 < h; y0 += stripH) {
+        const ch = Math.min(stripH, h - y0);
+        const imgData = ctx.getImageData(0, y0, w, ch);
+        const d = imgData.data;
+        for (let i = 0; i < d.length; i += 4) {
+          if (d[i + 3] > 0 && d[i + 3] < 255) d[i + 3] = d[i + 3] > 127 ? 255 : 0;
+        }
+        ctx.putImageData(imgData, 0, y0);
+      }
+      return canvas;
+    }
+
+    function removeStrayPixels(canvas) {
+      const w = canvas.width, h = canvas.height;
+      if (w * h > 36000000) return canvas;
+      const ctx = canvas.getContext('2d');
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+      const visited = new Uint8Array(w * h);
+      const stack = new Int32Array(w * h);
+      const dx = [-1, 1, 0, 0, -1, -1, 1, 1];
+      const dy = [0, 0, -1, 1, -1, 1, -1, 1];
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = y * w + x;
+          if (data[idx * 4 + 3] > 0 && visited[idx] === 0) {
+            let ptr = 0;
+            stack[ptr++] = idx;
+            visited[idx] = 1;
+            const cluster = [];
+            let isSmall = true;
+
+            while (ptr > 0) {
+              const curr = stack[--ptr];
+              if (isSmall) {
+                cluster.push(curr);
+                if (cluster.length > 7) isSmall = false;
+              }
+              const cy = Math.floor(curr / w), cx = curr % w;
+              for (let k = 0; k < 8; k++) {
+                const nx = cx + dx[k], ny = cy + dy[k];
+                if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                  const nIdx = ny * w + nx;
+                  if (visited[nIdx] === 0 && data[nIdx * 4 + 3] > 0) {
+                    visited[nIdx] = 1;
+                    stack[ptr++] = nIdx;
+                  }
+                }
+              }
+            }
+            if (isSmall) {
+              for (let k = 0; k < cluster.length; k++) data[cluster[k] * 4 + 3] = 0;
+            }
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+      return canvas;
+    }
+
+    function applyBadProviderStroke(srcCanvas, color, maskCanvas) {
+      const w = srcCanvas.width, h = srcCanvas.height;
+      const out = document.createElement('canvas');
+      out.width = w; out.height = h;
+      const ctx = out.getContext('2d');
+      ctx.drawImage(srcCanvas, 0, 0);
+      const sData = ctx.getImageData(0, 0, w, h).data;
+      const outImg = ctx.createImageData(w, h);
+      const d = outImg.data;
+      const maskData = maskCanvas ? maskCanvas.getContext('2d').getImageData(0, 0, w, h).data : null;
+      const rad = 4;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          if (sData[idx + 3] > 0) {
+            d[idx] = sData[idx]; d[idx + 1] = sData[idx + 1]; d[idx + 2] = sData[idx + 2]; d[idx + 3] = sData[idx + 3];
+            continue;
+          }
+          if (maskData && maskData[idx] > 0) continue;
+          let near = false;
+          for (let ny = -rad; ny <= rad && !near; ny++) {
+            for (let nx = -rad; nx <= rad; nx++) {
+              const py = y + ny, px = x + nx;
+              if (py >= 0 && py < h && px >= 0 && px < w && sData[(py * w + px) * 4 + 3] > 0) {
+                near = true; break;
+              }
+            }
+          }
+          if (near) { d[idx] = color.r; d[idx + 1] = color.g; d[idx + 2] = color.b; d[idx + 3] = 255; }
+        }
+      }
+      ctx.putImageData(outImg, 0, 0);
+      return out;
+    }
+
+    function trimCanvas(canvas) {
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      let top = null, bottom = null, left = null, right = null;
+      const stripH = 512;
+
+      for (let y0 = 0; y0 < h; y0 += stripH) {
+        const ch = Math.min(stripH, h - y0);
+        const data = ctx.getImageData(0, y0, w, ch).data;
+        for (let ly = 0; ly < ch; ly++) {
+          const y = y0 + ly;
+          const row = ly * w;
+          for (let x = 0; x < w; x++) {
+            if (data[(row + x) * 4 + 3] > 0) {
+              if (top === null) top = y;
+              bottom = y;
+              if (left === null || x < left) left = x;
+              if (right === null || x > right) right = x;
+            }
+          }
+        }
+      }
+      if (top === null) return canvas;
+      const tw = right - left + 1, th = bottom - top + 1;
+      const trimmed = document.createElement('canvas');
+      trimmed.width = tw; trimmed.height = th;
+      trimmed.getContext('2d').drawImage(canvas, left, top, tw, th, 0, 0, tw, th);
+      return trimmed;
+    }
+
+    const crcTable = (() => {
+      const t = new Uint32Array(256);
+      for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+        t[n] = c >>> 0;
+      }
+      return t;
+    })();
+
+    function crc32(bytes) {
+      let c = 0xffffffff;
+      for (let i = 0; i < bytes.length; i++) c = crcTable[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+      return (c ^ 0xffffffff) >>> 0;
+    }
+
+    async function injectPngDpi(blob, dpi) {
+      try {
+        const buf = new Uint8Array(await blob.arrayBuffer());
+        const ppm = Math.round(dpi / 0.0254);
+        const chunk = new Uint8Array(21);
+        const view = new DataView(chunk.buffer);
+        view.setUint32(0, 9, false);
+        chunk.set([112, 72, 89, 115], 4);
+        view.setUint32(8, ppm, false);
+        view.setUint32(12, ppm, false);
+        chunk[16] = 1;
+        view.setUint32(17, crc32(chunk.subarray(4, 17)), false);
+
+        const out = new Uint8Array(buf.length + chunk.length);
+        out.set(buf.subarray(0, 33), 0);
+        out.set(chunk, 33);
+        out.set(buf.subarray(33), 33 + chunk.length);
+        return new Blob([out], { type: 'image/png' });
+      } catch {
+        return blob;
+      }
+    }
+
+    function triggerDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2500);
+    }
+
+    function exportFinal(type) {
+      if (!originalImgObject) return alert('Sube una imagen primero.');
+      showLoader('Renderizando archivo sin fondo...', `${originalImgObject.width}×${originalImgObject.height} px · ${config.ppi} DPI`);
+
+      setTimeout(() => {
+        try {
+          const w = originalImgObject.width, h = originalImgObject.height;
+          const exportCanvas = document.createElement('canvas');
+          exportCanvas.width = w; exportCanvas.height = h;
+          const eCtx = exportCanvas.getContext('2d', { willReadFrequently: true });
+          const maskData = eraserMaskCtx.getImageData(0, 0, w, h).data;
+
+          runChromaEngine(eCtx, w, h, editedCanvas, config.dotSize, maskData);
+          if (restoreCanvas) eCtx.drawImage(restoreCanvas, 0, 0);
+
+          let finalCanvas = exportCanvas;
+          if (badProviderToggle.checked && config.shape === 'none') {
+            finalCanvas = applyBadProviderStroke(finalCanvas, config.chromaColor, eraserMaskCanvas);
+          }
+
+          finalCanvas = removeSemiTransparencies(finalCanvas);
+          finalCanvas = removeStrayPixels(finalCanvas);
+          finalCanvas = trimCanvas(finalCanvas);
+
+          const baseName = fileNameInput.value.trim() || 'semitono-dtf';
+
+          if (type === 'png') {
+            finalCanvas.toBlob(async (blob) => {
+              if (!blob) { hideLoader(); return; }
+              const finalBlob = await injectPngDpi(blob, config.ppi);
+              triggerDownload(finalBlob, `${baseName}-semitono.png`);
+              hideLoader();
+            }, 'image/png');
+          } else {
+            const { jsPDF } = window.jspdf;
+            const mmW = (finalCanvas.width / config.ppi) * 25.4;
+            const mmH = (finalCanvas.height / config.ppi) * 25.4;
+            const pdf = new jsPDF({ orientation: mmW > mmH ? 'l' : 'p', unit: 'mm', format: [mmW, mmH] });
+            pdf.addImage(finalCanvas.toDataURL('image/png'), 'PNG', 0, 0, mmW, mmH);
+            triggerDownload(pdf.output('blob'), `${baseName}-semitono.pdf`);
+            hideLoader();
+          }
+        } catch (err) {
+          console.error(err);
+          hideLoader();
+          alert('Error de memoria al exportar. Prueba reducir la resolución o los PPI.');
+        }
+      }, 60);
+    }
+
+    // ==================== Enlace de controles ====================
+    function setShape(shape, btn) {
+      config.shape = shape;
+      document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const bp = document.getElementById('bad-provider-container');
+      bp.style.display = shape === 'none' ? 'block' : 'none';
+      if (shape !== 'none') badProviderToggle.checked = false;
+      schedulePreview();
+    }
+
+    document.getElementById('cfg-brightness').addEventListener('input', (e) => {
+      config.brightness = parseInt(e.target.value, 10);
+      document.getElementById('val-brightness').innerText = config.brightness;
+      schedulePreview();
+    });
+    document.getElementById('cfg-contrast').addEventListener('input', (e) => {
+      config.contrast = parseInt(e.target.value, 10);
+      document.getElementById('val-contrast').innerText = config.contrast;
+      schedulePreview();
+    });
+    document.getElementById('cfg-sharpen').addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      config.sharpen = val / 100;
+      document.getElementById('val-sharpen').innerText = val;
+      schedulePreview();
+    });
+
+    document.getElementById('cfg-chroma').addEventListener('input', (e) => {
+      config.chromaActive = true;
+      updateChromaFromHex(e.target.value);
+      schedulePreview();
+    });
+    document.getElementById('cfg-tolerance').addEventListener('input', (e) => {
+      config.tolerance = parseInt(e.target.value, 10);
+      document.getElementById('val-tolerance').innerText = config.tolerance + '%';
+      schedulePreview();
+    });
+    document.getElementById('cfg-lpi').addEventListener('input', (e) => {
+      config.lpi = parseInt(e.target.value, 10);
+      config.dotSize = config.ppi / config.lpi;
+      document.getElementById('val-lpi').innerText = config.lpi + ' LPI';
+      schedulePreview();
+    });
+    document.getElementById('cfg-angle').addEventListener('input', (e) => {
+      config.angle = parseInt(e.target.value, 10);
+      document.getElementById('val-angle').innerText = config.angle + '°';
+      schedulePreview();
+    });
+    document.getElementById('cfg-eraser-size').addEventListener('input', (e) => {
+      eraserSize = parseInt(e.target.value, 10);
+      document.getElementById('val-eraser-size').innerText = eraserSize + 'px';
+      if (!isAltPressed) updateBrushCursor();
+    });
+    document.getElementById('preview-white-stroke').addEventListener('change', schedulePreview);
+
+    document.getElementById('preview-quality').addEventListener('change', () => {
+      if (!originalImgObject) return;
+      const oldScale = pScale;
+      pScale = computePreviewScale();
+      if (oldScale !== pScale) {
+        currentZoom *= (oldScale / pScale);
+        updateTransform();
+      }
+      renderPreviewNow();
+    });
+
+    document.getElementById('export-ppi').addEventListener('change', (e) => {
+      config.ppi = parseInt(e.target.value, 10);
+      config.dotSize = config.ppi / config.lpi;
+      if (originalImgObject) updateResolutionInfo(originalImgObject.width, originalImgObject.height);
+      schedulePreview();
+    });
+  </script>
+</body>
+</html>
